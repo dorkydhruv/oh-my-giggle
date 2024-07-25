@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 export const Room = ({
   name,
@@ -10,7 +9,6 @@ export const Room = ({
   localAudioTrack: MediaStreamTrack;
   localVideoTrack: MediaStreamTrack;
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [lobby, setLobby] = useState(true);
   const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
@@ -33,7 +31,7 @@ export const Room = ({
         setLobby(false);
         const pc = new RTCPeerConnection();
         setSendingPc(pc);
-        const stream = new MediaStream();
+        // const stream = new MediaStream();
         // if (localVideoRef.current) {
         //   localVideoRef.current.srcObject = stream;
         // }
@@ -41,8 +39,13 @@ export const Room = ({
         // stream.addTrack(localVideoTrack);
         pc.addTrack(localAudioTrack);
         pc.addTrack(localVideoTrack);
-        pc.onicecandidate = async () => {
+        // pc.onicecandidate = async (e) => {
+        //   if (e.candidate) pc.addIceCandidate(e.candidate);
+        // };
+        pc.onnegotiationneeded = async () => {
           const sdp = await pc.createOffer();
+          //@ts-ignore
+          pc.setLocalDescription(sdp);
           socket.emit("offer", {
             sdp,
             roomId,
@@ -51,14 +54,13 @@ export const Room = ({
       });
 
       //recieve offer
-      socket.on("offer", ({ roomId, offer }) => {
+      socket.on("offer", ({ roomId, sdp: remoteSdp }) => {
         setLobby(false);
         const pc = new RTCPeerConnection();
-        pc.setRemoteDescription({
-          type: "offer",
-          sdp: offer,
-        });
+        pc.setRemoteDescription(remoteSdp);
         const sdp = pc.createAnswer();
+        //@ts-ignore
+        pc.setLocalDescription(sdp);
         const stream = new MediaStream();
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = stream;
@@ -84,13 +86,10 @@ export const Room = ({
       });
 
       //recieve answer
-      socket.on("answer", ({ roomId, answer }) => {
+      socket.on("answer", ({ roomId, sdp: remoteSdp }) => {
         setLobby(false);
         setSendingPc((pc) => {
-          pc?.setRemoteDescription({
-            type: "answer",
-            sdp: answer,
-          });
+          pc?.setRemoteDescription(remoteSdp);
           return pc;
         });
       });

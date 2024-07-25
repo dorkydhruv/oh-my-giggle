@@ -13,6 +13,8 @@ export class RoomManager {
   }
   createRoom(user1: User, user2: User) {
     const roomId = this.generate().toString();
+    console.log("Room created : ", roomId);
+    console.log("Room has : ", user1.name, user2.name);
     this.rooms.set(roomId.toString(), {
       user1,
       user2,
@@ -20,9 +22,13 @@ export class RoomManager {
     user1.socket.emit("send-offer", {
       roomId,
     });
+    user2.socket.emit("send-offer", {
+      roomId,
+    });
   }
 
   onOffer(roomId: string, sdp: string) {
+    console.log("Room offer : ", sdp.toString());
     const user2 = this.rooms.get(roomId)?.user2;
     user2?.socket.emit("offer", {
       sdp,
@@ -31,6 +37,7 @@ export class RoomManager {
   }
 
   onAnswer(roomId: string, sdp: string) {
+    console.log("Room answer : ", sdp.toString());
     const user1 = this.rooms.get(roomId)?.user2;
     user1?.socket.emit("answer", {
       sdp,

@@ -20,7 +20,9 @@ export class UserManager {
       name,
       socket,
     });
+    console.log("Adding", name);
     this.queue.push(socket.id);
+    console.log("Queue", this.queue);
     socket.send("lobby"); //waiting for match
     this.clearQueue();
     this.initHandlers(socket);
@@ -36,6 +38,7 @@ export class UserManager {
     }
     const user1Id = this.queue.pop();
     const user2Id = this.queue.pop();
+    console.log("Matched", user1Id, user2Id);
     const user1 = this.users.find((x) => x.socket.id === user1Id);
     const user2 = this.users.find((x) => x.socket.id === user2Id);
     if (!user2 || !user1) return;
@@ -43,9 +46,11 @@ export class UserManager {
   }
   initHandlers(socket: Socket) {
     socket.on("offer", ({ sdp, roomId }: { sdp: string; roomId: string }) => {
+      console.log("In offer");
       this.roomManager.onOffer(roomId, sdp);
     });
     socket.on("answer", ({ sdp, roomId }: { sdp: string; roomId: string }) => {
+      console.log("In answer");
       this.roomManager.onAnswer(roomId, sdp);
     });
   }

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { Room } from "./Room";
 export const Landing = () => {
   const [name, setName] = useState("");
@@ -48,7 +47,7 @@ export const Landing = () => {
   }
   return (
     <Room
-      name="room"
+      name={name}
       // @ts-ignore
       localAudioTrack={localAudioTrack}
       // @ts-ignore
